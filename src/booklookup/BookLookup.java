@@ -13,25 +13,36 @@ public class BookLookup
         // Set up Scanner and welcome user.
         Scanner input = new Scanner(System.in);
         System.out.println("Welcome, this program will help you look up information about a book.");
-        
+        System.out.println("Each book has an book number (ISBN) which uniquely identifies the book");
+        System.out.println("ISBNs are either 10-digits like 1492072508 or 13-digits like 978-1492072508");
+
         // Get user's ISBN number.
-        System.out.print("What is the ISBN number of the book you would like information about? ");
+        System.out.print("Enter the ISBN number of the book you would like information about (do not enter the dash, only the digits)? ");
         long isbn = input.nextLong();
         
         // Look up the title and description.
         String results = retrieveBookData(isbn);
         String title = parseTitle(results);
-        String description = parseDescription(results);
+        String date = parseDate(results);
         
         // Output the results.
         System.out.println("The title is: " + title);
-        System.out.println("Description: " + description);
+        System.out.println("Published date: " + date);
     }
     
     
     // ====================================================================
     // Do not motify any code below this line
     // ====================================================================
+    
+    
+    /**
+     * Grab the title from the JSON file.  
+     * It should look like:  "title": "Think Java",
+     * @param json
+     * @return title as a string
+     * TODO -- This should really use a JSON parsing library like GSON
+     */
     public static String parseTitle(String json)
     {
         String title = "Not found";
@@ -50,6 +61,39 @@ public class BookLookup
         return title;
     }
     
+    /**
+     * Grab the date from the JSON file.  
+     * It should look like:  "publish_date": "2019",
+     * @param json
+     * @return date as a string
+     * TODO -- This should really use a JSON parsing library like GSON
+     */
+    public static String parseDate(String json)
+    {
+        String publishDate = "Not found";
+        int dateIndex = json.indexOf("publish_date");
+        
+        if (dateIndex > -1)
+        {   
+            int startIndex = json.indexOf(": \"", dateIndex);
+            int endIndex = json.indexOf("\",", dateIndex);
+            //System.out.println("start:"+startIndex+" end:"+endIndex);
+
+            if (startIndex >= 0 && endIndex >= 0)
+            {
+                publishDate = json.substring(startIndex+3, endIndex);
+            }
+        }
+        
+        return publishDate;
+    }
+        
+    /**
+     * Grab the description from the JSON file.  
+     *    --- no longer used because the API does not provide the description
+     * @param json
+     * @return description as a string
+     */
     public static String parseDescription(String json)
     {
         String description = "Not found";
@@ -69,6 +113,12 @@ public class BookLookup
         return description;
     }
     
+    /**
+     * Retrieves the book data from the open library API and returns a JSON string
+     *    The URL format is like:  https://openlibrary.org/isbn/1492072508.json
+     * @param isbn as a long int (no dashes)
+     * @return JSON as a string
+     */
     public static String retrieveBookData(long isbn)
     {
         String url = "https://openlibrary.org/isbn/" + isbn + ".json";
@@ -78,10 +128,12 @@ public class BookLookup
         try (BufferedReader inFile = new BufferedReader(new InputStreamReader(new URL(url).openStream())))
         {
             line = inFile.readLine();
-            
+            //System.out.println("   FILE: "+line);
+
             while (line != null) {
                 data += line + "\n";
                 line = inFile.readLine();
+                //System.out.println("   FILE: "+line);
             }
         }
         catch (IOException ioException)
